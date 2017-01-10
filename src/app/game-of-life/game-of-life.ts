@@ -6,7 +6,11 @@ export class GameOfLife {
   private ctx: CanvasRenderingContext2D;
   private board: Board;
   private cellDimension: number;
-  private directionOffsets: Coords[];
+  private directionOffsets: Coords[] = [
+    new Coords(-1, -1), new Coords(0, -1), new Coords(1, -1),
+    new Coords(-1, 0)   /*   center    */, new Coords(1, 0),
+    new Coords(-1, 1),  new Coords(0, +1), new Coords(1, 1)
+  ];
 
   constructor(public canvasId: string = "board") {
     this.canvas = <HTMLCanvasElement>document.getElementById(canvasId);
@@ -15,7 +19,11 @@ export class GameOfLife {
     this.ctx.fillStyle = 'cadetblue';
     this.cellDimension = 10;
     this.board = this.initBoard();
-    this.directionOffsets = GameOfLife.getSquaredNeighbors();
+
+    this.canvas.addEventListener('mouseup', (event) => {
+      let canvasMousePosition = this.getCanvasMousePosition(event);
+      this.changeCellState(canvasMousePosition);
+    })
   }
 
   public start() {
@@ -24,8 +32,8 @@ export class GameOfLife {
   }
 
   private initBoard(): Board {
-    const cols = this.canvas.width / this.cellDimension;
-    const rows = this.canvas.height / this.cellDimension;
+    const cols = Math.floor(this.canvas.width / this.cellDimension);
+    const rows = Math.floor(this.canvas.height / this.cellDimension);
     return new Board(cols, rows);
   }
 
@@ -61,12 +69,12 @@ export class GameOfLife {
 
     const fillerRows = spaceFiller.length;
     const fillerColumns = spaceFiller[0].length;
-    const startingX = Math.floor((this.board.rows / 2) - (fillerColumns / 2));
-    const startingY = Math.floor((this.board.columns / 2) - (fillerRows / 2));
+    const startingCol = Math.floor((this.board.rows / 2) - (fillerColumns / 2));
+    const startingRow = Math.floor((this.board.columns / 2) - (fillerRows / 2));
 
     for (let row = 0; row < fillerRows; row++) {
       for (let column = 0; column < fillerColumns; column++) {
-        this.board.setStateAt(startingX + column, startingY + row, spaceFiller[row][column] == "1");
+        this.board.setStateAt(startingCol + column, startingRow + row, spaceFiller[row][column] == "1");
       }
     }
   }
@@ -82,11 +90,12 @@ export class GameOfLife {
 
   private render() {
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    for (let y = 0; y < this.board.columns; y++) {
-      for (let x = 0; x < this.board.rows; x++) {
+    for (let row = 0; row < this.board.rows; row++) {
+      for (let column = 0; column < this.board.columns; column++) {
         this.ctx.beginPath();
-        this.ctx.rect(x * this.cellDimension, y * this.cellDimension, this.cellDimension, this.cellDimension);
-        if (this.board.getStateAt(x, y)) this.ctx.fill();
+        let cellCoords = this.getCellCoords(row, column);
+        this.ctx.rect(cellCoords.x, cellCoords.y, this.cellDimension, this.cellDimension);
+        if (this.board.getStateAt(row, column)) this.ctx.fill();
         else this.ctx.stroke();
       }
     }
@@ -95,18 +104,18 @@ export class GameOfLife {
   private update() {
     const nextBoard: Board = this.initBoard();
 
-    for (let y = 0; y < this.board.columns; y++) {
-      for (let x = 0; x < this.board.rows; x++) {
-        nextBoard.setStateAt(x, y, this.getCellFate(x, y));
+    for (let row = 0; row < this.board.rows; row++) {
+      for (let column = 0; column < this.board.columns; column++) {
+        nextBoard.setStateAt(row, column, this.getCellFate(row, column));
       }
     }
 
     this.board = nextBoard;
   }
 
-  private getCellFate(x: number, y: number): boolean {
-    const aliveNeighborsCount = this.getCountOfAliveNeighbors(x, y);
-    const cellCurrentState: boolean = this.board.getStateAt(x, y);
+  private getCellFate(row: number, column: number): boolean {
+    const aliveNeighborsCount = this.getCountOfAliveNeighbors(row, column);
+    const cellCurrentState: boolean = this.board.getStateAt(row, column);
 
     // state "true" => "alive", state "false" => "dead"
     let cellFate: boolean = false;
@@ -127,41 +136,55 @@ export class GameOfLife {
 
   /**
    * Count the number of living neighbors
-   * @param x Starting x point
-   * @param y Starting y point
+   * @param row
+   * @param column
    * @returns {number} Number of living neighbors
    */
-  private getCountOfAliveNeighbors(x: number, y: number): number {
+  private getCountOfAliveNeighbors(row: number, column: number): number {
     let aliveCount = 0;
 
     for (let offset of this.directionOffsets) {
-      const neighborX = x + offset.x;
-      const neighborY = y + offset.y;
-      if (this.isAlive(neighborX, neighborY)) aliveCount++;
+      const neighborX = row + offset.x;
+      const neighborY = column + offset.y;
+      if (
+        // check if the point is inside the board bound
+        neighborX >= 0 && neighborX < this.board.rows &&
+        neighborY >= 0 && neighborY < this.board.columns &&
+        // check if the point is filled
+        this.board.getStateAt(neighborX, neighborY) === true
+      ) aliveCount++;
     }
 
     return aliveCount;
   }
 
-  /**
-   * Check if the cell is alive
-   * @param x Coords x of the cell
-   * @param y Coords y of the cell
-   * @returns {boolean} Return true if the cell is alive
-   */
-  private isAlive(x, y) {
-    // check is the point is inside the board bound
-    return x >= 0 && x < this.board.columns && y >= 0 && y < this.board.rows &&
-      // check if the point is filled
-      this.board.getStateAt(x, y) === true;
+  public getCellCoords(row: number, column: number): Coords {
+    return new Coords(row * this.cellDimension, column * this.cellDimension);
   }
 
-  private static getSquaredNeighbors(): Coords[] {
-    return [
-      new Coords(-1, -1), new Coords(0, -1), new Coords(1, -1),
-      new Coords(-1, 0)   /*   center    */, new Coords(1, 0),
-      new Coords(-1, 1),  new Coords(0, +1), new Coords(1, 1)
-    ]
+  private changeCellState(mouse) {
+    let col = Math.floor(mouse.x / this.cellDimension);
+    let row = Math.floor(mouse.y / this.cellDimension);
+    let newState = !this.board.getStateAt(col, row);
+    this.board.setStateAt(col, row, newState);
+    this.renderCell(col, row, newState);
+  }
+
+  private renderCell(row, col, state) {
+    let cellCoords:Coords = this.getCellCoords(row, col);
+    this.ctx.clearRect(cellCoords.x, cellCoords.y, this.cellDimension, this.cellDimension);
+    this.ctx.beginPath();
+    this.ctx.rect(cellCoords.x, cellCoords.y, this.cellDimension, this.cellDimension);
+    if (state) this.ctx.fill();
+    else this.ctx.stroke();
+  }
+
+  private getCanvasMousePosition(event) {
+    const rect = this.canvas.getBoundingClientRect();
+    return {
+      x: event.clientX - rect.left,
+      y: event.clientY - rect.top
+    }
   }
 
 }

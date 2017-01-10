@@ -28,9 +28,9 @@ export class Board {
 
   private init() {
     for (let row = 0; row < this._rows; row++) {
-      this._state[row] = [];
+      this._state.push([]);
       for (let column = 0; column < this._columns; column++) {
-        this._state[row][column] = false;
+        this._state[row].push(false);
       }
     }
   }
