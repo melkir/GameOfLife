@@ -19,6 +19,8 @@ export class GameOfLife {
     this.ctx.fillStyle = 'cadetblue';
     this.cellDimension = 10;
     this.board = this.initBoard();
+    this.seedBoard();
+    this.render();
 
     this.canvas.addEventListener('mouseup', (event) => {
       let canvasMousePosition = this.getCanvasMousePosition(event);
@@ -27,7 +29,6 @@ export class GameOfLife {
   }
 
   public start() {
-    this.seedBoard();
     this.nextFrame();
   }
 
@@ -80,8 +81,8 @@ export class GameOfLife {
   }
 
   private nextFrame() {
-    this.render();
     this.update();
+    this.render();
     setTimeout(() => {
       this.nextFrame();
     }, 70);

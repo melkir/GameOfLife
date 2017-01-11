@@ -8,11 +8,26 @@ import { GameOfLife } from "./game-of-life";
 })
 export class GameOfLifeComponent {
 
+  private gol:GameOfLife;
+
   constructor() {
   }
 
   ngAfterViewInit() {
-    new GameOfLife().start();
+    this.gol = new GameOfLife();
+  }
+
+  play() {
+    this.gol.start();
+  }
+
+  pause() {
+  }
+
+  stop() {
+  }
+
+  next() {
   }
 
 }

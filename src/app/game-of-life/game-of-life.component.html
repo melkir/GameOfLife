@@ -1,1 +1,23 @@
+<style type="text/css">
+  #controls {
+    position: absolute;
+    left: 120px;
+  }
+</style>
+
 <canvas id="board" width="640" height="640"></canvas>
+<br>
+<div id="controls">
+  <button md-button (click)="play()">
+    <md-icon>play_arrow</md-icon>
+  </button>
+  <button md-button (click)="pause()">
+    <md-icon>pause</md-icon>
+  </button>
+  <button md-button (click)="stop()">
+    <md-icon>stop</md-icon>
+  </button>
+  <button md-button (click)="next()">
+    <md-icon>skip_next</md-icon>
+  </button>
+</div>
