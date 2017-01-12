@@ -7,6 +7,7 @@ export class GameOfLife {
   private ctx: CanvasRenderingContext2D;
   private board: Board;
   private cellDimension: number;
+  private timeout: NodeJS.Timer;
   private directionOffsets: Coords[] = [
     new Coords(-1, -1), new Coords(0, -1), new Coords(1, -1),
     new Coords(-1, 0)   /*   center    */, new Coords(1, 0),
@@ -33,6 +34,23 @@ export class GameOfLife {
     this.nextFrame();
   }
 
+  public pause() {
+    clearTimeout(this.timeout);
+  }
+
+  public reset() {
+    this.pause();
+    this.board = this.initBoard();
+    this.seedBoard();
+    this.render();
+  }
+
+  public next() {
+    this.pause();
+    this.update();
+    this.render();
+  }
+
   private initBoard(): Board {
     const cols = Math.floor(this.canvas.width / this.cellDimension);
     const rows = Math.floor(this.canvas.height / this.cellDimension);
@@ -56,7 +74,7 @@ export class GameOfLife {
   private nextFrame() {
     this.update();
     this.render();
-    setTimeout(() => {
+    this.timeout = setTimeout(() => {
       this.nextFrame();
     }, 70);
     // requestAnimationFrame(this.nextFrame.bind(this)); // Too fast!
@@ -122,10 +140,10 @@ export class GameOfLife {
       const neighborY = column + offset.y;
       if (
         // check if the point is inside the board bound
-        neighborX >= 0 && neighborX < this.board.rows &&
-        neighborY >= 0 && neighborY < this.board.columns &&
-        // check if the point is filled
-        this.board.getStateAt(neighborX, neighborY) === true
+      neighborX >= 0 && neighborX < this.board.rows &&
+      neighborY >= 0 && neighborY < this.board.columns &&
+      // check if the point is filled
+      this.board.getStateAt(neighborX, neighborY) === true
       ) aliveCount++;
     }
 
@@ -145,7 +163,7 @@ export class GameOfLife {
   }
 
   private renderCell(row, col, state) {
-    let cellCoords:Coords = this.getCellCoords(row, col);
+    let cellCoords: Coords = this.getCellCoords(row, col);
     this.ctx.clearRect(cellCoords.x, cellCoords.y, this.cellDimension, this.cellDimension);
     this.ctx.beginPath();
     this.ctx.rect(cellCoords.x, cellCoords.y, this.cellDimension, this.cellDimension);

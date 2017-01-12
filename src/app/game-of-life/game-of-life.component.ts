@@ -22,12 +22,15 @@ export class GameOfLifeComponent {
   }
 
   pause() {
+    this.gol.pause();
   }
 
   stop() {
+    this.gol.reset();
   }
 
   next() {
+    this.gol.next();
   }
 
 }
