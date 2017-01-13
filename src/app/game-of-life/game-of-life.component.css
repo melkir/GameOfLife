@@ -1,0 +1,9 @@
+#controls {
+  position: absolute;
+  left: 120px;
+}
+
+#space-filler {
+  padding-bottom: 10px;
+  padding-left: 5px;
+}
