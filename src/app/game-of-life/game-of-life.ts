@@ -8,6 +8,7 @@ export class GameOfLife {
   private board: Board;
   private cellDimension: number;
   private timeout: NodeJS.Timer;
+  private spaceFiller: String[];
   private directionOffsets: Coords[] = [
     new Coords(-1, -1), new Coords(0, -1), new Coords(1, -1),
     new Coords(-1, 0)   /*   center    */, new Coords(1, 0),
@@ -19,7 +20,8 @@ export class GameOfLife {
     this.ctx = <CanvasRenderingContext2D>this.canvas.getContext('2d');
     this.ctx.strokeStyle = '#e1e1e1';
     this.ctx.fillStyle = 'cadetblue';
-    this.cellDimension = 10;
+    this.cellDimension = SpaceFiller[1].cell;
+    this.spaceFiller = SpaceFiller[1].value;
     this.board = this.initBoard();
     this.seedBoard();
     this.render();
@@ -31,11 +33,13 @@ export class GameOfLife {
   }
 
   public start() {
+    if (this.timeout != null) return;
     this.nextFrame();
   }
 
   public pause() {
     clearTimeout(this.timeout);
+    this.timeout = null;
   }
 
   public reset() {
@@ -48,7 +52,13 @@ export class GameOfLife {
   public next() {
     this.pause();
     this.update();
-    this.render();
+  }
+
+  public changeFiller(spaceFiller:String[], cellDimension:number) {
+    this.pause();
+    this.cellDimension = cellDimension;
+    this.spaceFiller = spaceFiller;
+    this.reset();
   }
 
   private initBoard(): Board {
@@ -58,22 +68,20 @@ export class GameOfLife {
   }
 
   private seedBoard() {
-    const spaceFiller: String[] = SpaceFiller.model1;
-    const fillerRows = spaceFiller.length;
-    const fillerColumns = spaceFiller[0].length;
+    const fillerRows = this.spaceFiller.length;
+    const fillerColumns = this.spaceFiller[0].length;
     const startingCol = Math.floor((this.board.rows / 2) - (fillerColumns / 2));
     const startingRow = Math.floor((this.board.columns / 2) - (fillerRows / 2));
 
     for (let row = 0; row < fillerRows; row++) {
       for (let column = 0; column < fillerColumns; column++) {
-        this.board.setStateAt(startingCol + column, startingRow + row, spaceFiller[row][column] == "1");
+        this.board.setStateAt(startingCol + column, startingRow + row, this.spaceFiller[row][column] == "1");
       }
     }
   }
 
   private nextFrame() {
     this.update();
-    this.render();
     this.timeout = setTimeout(() => {
       this.nextFrame();
     }, 70);
@@ -94,6 +102,7 @@ export class GameOfLife {
   }
 
   private update() {
+    // update the board (memory)
     const nextBoard: Board = this.initBoard();
 
     for (let row = 0; row < this.board.rows; row++) {
@@ -103,6 +112,8 @@ export class GameOfLife {
     }
 
     this.board = nextBoard;
+    // render modification (visually)
+    this.render();
   }
 
   private getCellFate(row: number, column: number): boolean {
@@ -164,9 +175,9 @@ export class GameOfLife {
 
   private renderCell(row, col, state) {
     let cellCoords: Coords = this.getCellCoords(row, col);
-    this.ctx.clearRect(cellCoords.x, cellCoords.y, this.cellDimension, this.cellDimension);
+    this.ctx.clearRect(cellCoords.x, cellCoords.y, this.cellDimension - 1, this.cellDimension - 1);
     this.ctx.beginPath();
-    this.ctx.rect(cellCoords.x, cellCoords.y, this.cellDimension, this.cellDimension);
+    this.ctx.rect(cellCoords.x, cellCoords.y, this.cellDimension - 1, this.cellDimension - 1);
     if (state) this.ctx.fill();
     else this.ctx.stroke();
   }

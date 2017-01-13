@@ -3,10 +3,22 @@
     position: absolute;
     left: 120px;
   }
+
+  #space-filler {
+    padding-bottom: 10px;
+    padding-left: 5px;
+  }
 </style>
 
+<div id="space-filler">
+  Space filler:
+  <md-radio-group [(ngModel)]="chosenSpaceFiller" (ngModelChange)="onChange($event)">
+    <md-radio-button *ngFor="let filler of spaceFillers" [value]="filler">
+      {{ filler.name }}&nbsp;&nbsp;
+    </md-radio-button>
+  </md-radio-group>
+</div>
 <canvas id="board" width="640" height="640"></canvas>
-<br>
 <div id="controls">
   <button md-button (click)="play()">
     <md-icon>play_arrow</md-icon>

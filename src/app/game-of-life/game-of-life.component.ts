@@ -1,5 +1,6 @@
 import { Component } from "@angular/core";
 import { GameOfLife } from "./game-of-life";
+import { SpaceFiller } from "./spaceFiller";
 
 @Component({
   selector: 'app-game-of-life',
@@ -8,9 +9,13 @@ import { GameOfLife } from "./game-of-life";
 })
 export class GameOfLifeComponent {
 
-  private gol:GameOfLife;
+  private gol: GameOfLife;
+  private spaceFillers;
+  private chosenSpaceFiller;
 
   constructor() {
+    this.spaceFillers = SpaceFiller;
+    this.chosenSpaceFiller = SpaceFiller[1];
   }
 
   ngAfterViewInit() {
@@ -31,6 +36,10 @@ export class GameOfLifeComponent {
 
   next() {
     this.gol.next();
+  }
+
+  onChange(event) {
+    this.gol.changeFiller(event.value, event.cell);
   }
 
 }
